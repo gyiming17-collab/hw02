@@ -2,34 +2,41 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 
-# 加载环境变量
+# 加载环境变量（从.env文件读取API Key）
 load_dotenv()
 
-# 初始化 DeepSeek 客户端
+# 初始化DeepSeek客户端
 client = OpenAI(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
-    base_url=os.getenv("DEEPSEEK_BASE_URL"),
+    base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
 )
 
-def chat_with_deepseek(user_input: str) -> str:
-    """调用 DeepSeek 模型，返回回答"""
-    response = client.chat.completions.create(
-        model="deepseek-chat",
-        messages=[
-            {"role": "system", "content": "你是一个乐于助人的AI助手，回答简洁清晰。"},
-            {"role": "user", "content": user_input}
-        ],
-        temperature=0.7,
-    )
-    return response.choices[0].message.content
+def deepseek_chatbot(user_query: str) -> str:
+    """
+    调用DeepSeek模型实现Chatbot功能
+    :param user_query: 用户输入的文本问题
+    :return: 模型生成的回答
+    """
+    try:
+        response = client.chat.completions.create(
+            model="deepseek-chat",  # DeepSeek通用对话模型
+            messages=[
+                {"role": "system", "content": "你是专业的AI助手，擅长解答技术问题，回答简洁准确"},
+                {"role": "user", "content": user_query}
+            ],
+            temperature=0.6,  # 控制回答随机性
+            max_tokens=1024    # 最大生成长度
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"调用失败：{str(e)}（请检查API Key是否正确，网络是否通畅）"
 
 if __name__ == "__main__":
-    print("=== DeepSeek Chatbot 已启动 ===")
-    print("输入 'quit' 或 'exit' 退出对话\n")
+    print("=== DeepSeek Chatbot 启动成功（输入'quit'退出）===")
     while True:
-        user_input = input("你: ")
-        if user_input.lower() in ["quit", "exit"]:
-            print("Bot: 再见！")
+        user_input = input("\n你：")
+        if user_input.lower() == "quit":
+            print("Bot：再见！")
             break
-        answer = chat_with_deepseek(user_input)
-        print(f"Bot: {answer}\n")
+        result = deepseek_chatbot(user_input)
+        print(f"Bot：{result}")
